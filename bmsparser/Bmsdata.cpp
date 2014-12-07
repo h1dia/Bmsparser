@@ -144,27 +144,17 @@ void Bmsdata::setbmsstring()
 	return;
 }
 
-int Bmsdata::base_stoi(int base, std::string str)	//10進数変換　もう少し綺麗にしたいですね
+int Bmsdata::base_stoi(int base, std::string str)	//10進数変換
 {
-	int int_ten_place, int_one_place, ans;
-
-	char *cstr = const_cast<char *>(str.c_str());
-
-	if (cstr[0] >= '0' && cstr[0] <= '9')
-		int_ten_place = cstr[0] - '0';
-	if (cstr[0] >= 'A' && cstr[0] <= 'Z')
-		int_ten_place = cstr[0] - 'A';
-
-	if (cstr[1] >= '0' && cstr[1] <= '9')
-		int_one_place = cstr[1] - '0';
-	if (cstr[1] >= 'A' && cstr[1] <= 'Z')
-		int_one_place = cstr[1] - 'Z';
-
-	ans = int_one_place + int_ten_place * base;
-
-	//n進数のnが1つの位の値以上の場合はエラーを返す
-	if (int_ten_place >= base || int_one_place >= base)
-		ans = -1;
+	int ans = 0;
+	std::string num_check = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	
+	for (int i = 0; i < 2; i++){
+		for (int j = 0; j < base; j++){
+			if (str.at(i) == num_check.at(j))
+				ans += j * (i + 1);
+		}
+	}
 
 	return ans;
 }
