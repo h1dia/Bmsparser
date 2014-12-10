@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include "Bmsdata.h"
+#include <cmath>
 
 Bmsdata::Bmsdata(){
 }
@@ -49,7 +50,7 @@ void Bmsdata::setbmsstring()
 	//カウンタの初期化
 	random_count = 0;
 
-	//ControllFlow切り出し
+	//ControlFlow切り出し
 	for (unsigned int i = 0; i < temp_array.size(); i++){
 
 		if (temp_array.at(i).substr(0, 6) == "RANDOM"){
@@ -103,7 +104,7 @@ void Bmsdata::setbmsstring()
 		tempdata.id = base_stoi(36, wav_array.at(i).substr(3, 2));
 		tempdata.path = wav_array.at(i).substr(6);
 
-		bmp_path_array.push_back(tempdata);
+		wav_path_array.push_back(tempdata);
 	}
 
 	//data解析
@@ -149,10 +150,10 @@ int Bmsdata::base_stoi(int base, std::string str)	//10進数変換
 	int ans = 0;
 	std::string num_check = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	
-	for (int i = 0; i < 2; i++){
+	for (int i = 0; i < str.length(); i++){
 		for (int j = 0; j < base; j++){
 			if (str.at(i) == num_check.at(j))
-				ans += j * (i + 1);
+				ans += j * pow(36, str.length() - 1 - i);
 		}
 	}
 
