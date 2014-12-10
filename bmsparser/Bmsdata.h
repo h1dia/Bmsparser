@@ -15,7 +15,7 @@ public:
 
 	void setbmspath(std::string bmspath);
 	void setbmsstring();
-	void loadheadder();
+	void loadheader();
 
 	std::string gettitle();
 	int getsize(int channel);
@@ -54,7 +54,7 @@ private:
 
 	static const int CHANNEL_ELEMENTS = 575;
 	std::vector<MAIN> main_data_array[CHANNEL_ELEMENTS];
-	std::vector<std::string> headder_array, main_array, wav_array, bmp_array;
+	std::vector<std::string> header_array, main_array, wav_array, bmp_array;
 	std::vector<RANDOM> random_array;
 	std::vector<DATA> bmp_path_array, wav_path_array;
 	std::vector<std::string> data;
