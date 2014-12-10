@@ -87,7 +87,7 @@ void Bmsdata::setbmsstring()
 		else if (atoi(temp_array.at(i).substr(0, 5).c_str()) > 0)
 			main_array.push_back(temp_array.at(i));
 		else
-			headder_array.push_back(temp_array.at(i));
+			header_array.push_back(temp_array.at(i));
 	}
 
 	//path‰ğÍ
