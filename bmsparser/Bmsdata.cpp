@@ -11,7 +11,6 @@ Bmsdata::Bmsdata(){
 }
 
 Bmsdata::~Bmsdata(){
-
 }
 
 void Bmsdata::setbmspath(std::string setbmspath){
@@ -51,6 +50,7 @@ void Bmsdata::setbmsstring()
 	random_count = 0;
 
 	//ControlFlow切り出し
+	//TODO:真面目に制御フローを読み込むならば、データとパーサを分ける必要がありそう
 	for (unsigned int i = 0; i < temp_array.size(); i++){
 
 		if (temp_array.at(i).substr(0, 6) == "RANDOM"){
@@ -76,20 +76,20 @@ void Bmsdata::setbmsstring()
 	//ヘッダ部
 	for (unsigned i = 0; i < temp_array.size(); i++){
 
-		if (temp_array.at(i).substr(0,3) == "BMP"){
+		if (temp_array.at(i).substr(0,3) == "BMP")
 			bmp_array.push_back(temp_array.at(i));
-		}
-		else if (temp_array.at(i).substr(0, 3) == "WAV"){
+
+		else if (temp_array.at(i).substr(0, 3) == "WAV")
 			wav_array.push_back(temp_array.at(i));
-		}
-		else if (temp_array.at(i).substr(0, 5) == "TITLE"){
-			title = temp_array.at(i).substr(6);
-		}
+
 		else if (atoi(temp_array.at(i).substr(0, 5).c_str()) > 0)
 			main_array.push_back(temp_array.at(i));
+
 		else
 			header_array.push_back(temp_array.at(i));
 	}
+	//header解析
+	header_analysis(header_array);
 
 	//path解析
 	for (unsigned i = 0; i < bmp_array.size(); i++){
@@ -97,6 +97,8 @@ void Bmsdata::setbmsstring()
 		tempdata.id = base_stoi(36, bmp_array.at(i).substr(3, 2));
 		tempdata.path = bmp_array.at(i).substr(6);
 
+		int j = i;
+		//idと配列の場所を同じにする
 		bmp_path_array.push_back(tempdata);
 	}
 	for (unsigned i = 0; i < wav_array.size(); i++){
@@ -136,11 +138,16 @@ void Bmsdata::setbmsstring()
 		}
 	}
 
-	//dataソート
+	//ソート
 	for (int i = 0; i < CHANNEL_ELEMENTS; i++){
 		if (main_data_array[i].size())
 			std::sort(main_data_array[i].begin(), main_data_array[i].end());
 	}
+	for (int i = 0; i < bmp_path_array.size(); i++)
+		std::sort(bmp_path_array.begin(), bmp_path_array.end());
+
+	for (int i = 0; i < wav_path_array.size(); i++)
+		std::sort(wav_path_array.begin(), wav_path_array.end());
 
 	return;
 }
@@ -160,8 +167,23 @@ int Bmsdata::base_stoi(int base, std::string str)	//10進数変換
 	return ans;
 }
 
+void Bmsdata::header_analysis(std::vector<std::string> header_array){
+	for (int i = 0; i < header_array.size(); i++){
+		if (header_array.at(i).substr(0, 5) == "TITLE")
+			title = header_array.at(i).substr(6);
+		else if (header_array.at(i).substr(0, 4) == "RANK")
+			rank = stoi(header_array.at(i).substr(5));
+		else if (header_array.at(i).substr(0, 9) == "PLAYLEVEL")
+			playlevel = stoi(header_array.at(i).substr(10));
+	}
+}
+
 std::string Bmsdata::gettitle(){
 	return title;
+}
+
+int Bmsdata::getplaylevel(){
+	return playlevel;
 }
 
 int Bmsdata::getsize(int channel){

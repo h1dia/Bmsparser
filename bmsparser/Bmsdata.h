@@ -5,11 +5,6 @@
 
 class Bmsdata{
 public:
-	struct RETURN_DATA{
-		std::string path;
-		double position;
-	};
-
 	Bmsdata();
 	~Bmsdata();
 
@@ -18,20 +13,22 @@ public:
 	void loadheader();
 
 	std::string gettitle();
+	int getplaylevel();
 	int getsize(int channel);
-	RETURN_DATA getmaindata(int channel, int position);
 
 	std::string bmspath;
 
 private:
-	struct RANDOM{
-		std::vector<std::string> string;
-		int	id;
-	};
+	static const int CHANNEL_ELEMENTS = 575;
 
 	struct DATA{
 		std::string path;
 		unsigned short int id;
+
+		bool operator<(const DATA& next) const	//ソート用のオペレータです。
+		{
+			return id < next.id;
+		}
 	};
 
 	struct MAIN{
@@ -47,19 +44,19 @@ private:
 		}
 	};
 
-	void parse_random(int start_random_array, std::vector<std::string> random_array);
-
+	void header_analysis(std::vector<std::string> headder_array);
 	int base_stoi(int base, std::string num);
-	bool asc(const MAIN&, const MAIN&);
 
-	static const int CHANNEL_ELEMENTS = 575;
 	std::vector<MAIN> main_data_array[CHANNEL_ELEMENTS];
 	std::vector<std::string> header_array, main_array, wav_array, bmp_array;
-	std::vector<RANDOM> random_array;
 	std::vector<DATA> bmp_path_array, wav_path_array;
 	std::vector<std::string> data;
 
 	int random_count;
+	int rank;
+	int total;
+	int playlevel;
 	std::string bmsfolder;
+	std::string banner;
 	std::string title;
 };
