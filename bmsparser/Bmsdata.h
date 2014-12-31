@@ -32,14 +32,14 @@ private:
 		}
 	};
 
-	struct MAIN{
+	struct CHANNEL{
 		unsigned short int measure;
 		unsigned int step;			// 位置を示します。 ex.{1}/4
 		unsigned int resolution;	// n/rhythm ex.4/{4}
 		unsigned short int id;
 		double num;
 
-		bool operator<(const MAIN& next) const	//ソート用のオペレータです。
+		bool operator<(const CHANNEL& next) const	//ソート用のオペレータです。
 		{
 			return measure == next.measure ? (double)step / resolution < (double)next.step / next.resolution : measure < next.measure;
 		}
@@ -54,8 +54,8 @@ private:
 
 	static bool starts_with(std::string& str, std::string substr);
 
-	std::vector<MAIN> main_data_array[CHANNEL_ELEMENTS];
-	std::vector<std::string> header_array, main_array, wav_array, bmp_array;
+	std::vector<CHANNEL> channel_data_array[CHANNEL_ELEMENTS];
+	std::vector<std::string> header_array, channel_array, wav_array, bmp_array;
 	std::vector<DATA> bmp_path_array, wav_path_array;
 	std::vector<std::string> data;
 

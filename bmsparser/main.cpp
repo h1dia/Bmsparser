@@ -11,7 +11,7 @@ int main(){
 	cout << "load start" << endl;
 	
 	QueryPerformanceFrequency(&sysfreq);
-	data.bmspath = "dive_air04FD.bms";
+	data.bmspath = "ubmchallenge.bms";
 	QueryPerformanceCounter(&ltime);
 	data.setbmsstring();
 	QueryPerformanceCounter(&lresult);
@@ -25,5 +25,6 @@ int main(){
 	cout << "notes   : " << notes << endl;
 	cout << "level   : " << data.getplaylevel() << endl;
 	cout << "calctime: " << (double)(lresult.QuadPart - ltime.QuadPart) / (double)sysfreq.QuadPart << "(sec)" << endl;
+
 	return 0;
 }
