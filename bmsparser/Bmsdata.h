@@ -21,6 +21,7 @@ public:
 
 private:
 	static const int CHANNEL_ELEMENTS = 575;
+	const char* kNotAvailable = "<N/A>";
 
 	struct DATA{
 		std::string path;
@@ -45,8 +46,7 @@ private:
 		}
 	};
 
-	unsigned int parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length);
-	void clean_random(std::vector<std::string>& temp_array);
+	void parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length);
 	unsigned int find_endif(std::vector<std::string>& temp_array, unsigned int index);
 	void header_analysis(std::vector<std::string>& header_array);
 	int base_stoi(int base, std::string num);
