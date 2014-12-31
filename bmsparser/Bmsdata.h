@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <random>
 
 class Bmsdata{
 public:
@@ -44,8 +45,14 @@ private:
 		}
 	};
 
-	void header_analysis(std::vector<std::string> headder_array);
+	unsigned int parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length);
+	void clean_random(std::vector<std::string>& temp_array);
+	unsigned int find_endif(std::vector<std::string>& temp_array, unsigned int index);
+	void header_analysis(std::vector<std::string>& header_array);
 	int base_stoi(int base, std::string num);
+	int random(int max);
+
+	static bool starts_with(std::string& str, std::string substr);
 
 	std::vector<MAIN> main_data_array[CHANNEL_ELEMENTS];
 	std::vector<std::string> header_array, main_array, wav_array, bmp_array;
@@ -59,4 +66,5 @@ private:
 	std::string bmsfolder;
 	std::string banner;
 	std::string title;
+	std::mt19937 random_engine;
 };
