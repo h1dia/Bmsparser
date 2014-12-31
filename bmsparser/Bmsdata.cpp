@@ -8,6 +8,9 @@
 #include <cmath>
 
 Bmsdata::Bmsdata(){
+	// ランダムエンジン初期化
+	std::random_device r;
+	random_engine = std::mt19937(r());
 }
 
 Bmsdata::~Bmsdata(){
@@ -50,36 +53,16 @@ void Bmsdata::setbmsstring()
 	random_count = 0;
 
 	//ControlFlow切り出し
-	//TODO:真面目に制御フローを読み込むならば、データとパーサを分ける必要がありそう
-	for (unsigned int i = 0; i < temp_array.size(); i++){
-
-		if (temp_array.at(i).substr(0, 6) == "RANDOM"){
-			;
-		}
-
-		if (temp_array.at(i).substr(0, 2) == "IF"){
-			bool endflag = true;
-			int j = i + 1;
-
-			while (endflag){						//ENDIFをさがせ
-				if (temp_array.at(j).substr(0, 3) == "ENDIF")
-					endflag = false;
-				j++;
-			}
-			//ENDIFが見つかったらそこを切り取る
-			for (int k = i; j > k; k++){
-			}
-		}
-		
-	}
+	parse_random(temp_array, 0, temp_array.size());
+	clean_random(temp_array);
 	
 	//ヘッダ部
 	for (unsigned i = 0; i < temp_array.size(); i++){
 
-		if (temp_array.at(i).substr(0,3) == "BMP")
+		if (starts_with(temp_array.at(i), "BMP"))
 			bmp_array.push_back(temp_array.at(i));
 
-		else if (temp_array.at(i).substr(0, 3) == "WAV")
+		else if (starts_with(temp_array.at(i), "WAV"))
 			wav_array.push_back(temp_array.at(i));
 
 		else if (atoi(temp_array.at(i).substr(0, 5).c_str()) > 0)
@@ -143,10 +126,10 @@ void Bmsdata::setbmsstring()
 		if (main_data_array[i].size())
 			std::sort(main_data_array[i].begin(), main_data_array[i].end());
 	}
-	for (int i = 0; i < bmp_path_array.size(); i++)
+	for (unsigned int i = 0; i < bmp_path_array.size(); i++)
 		std::sort(bmp_path_array.begin(), bmp_path_array.end());
 
-	for (int i = 0; i < wav_path_array.size(); i++)
+	for (unsigned int i = 0; i < wav_path_array.size(); i++)
 		std::sort(wav_path_array.begin(), wav_path_array.end());
 
 	return;
@@ -157,25 +140,127 @@ int Bmsdata::base_stoi(int base, std::string str)	//10進数変換
 	int ans = 0;
 	std::string num_check = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	
-	for (int i = 0; i < str.length(); i++){
+	for (unsigned int i = 0; i < str.length(); i++){
 		for (int j = 0; j < base; j++){
 			if (str.at(i) == num_check.at(j))
-				ans += j * pow(36, str.length() - 1 - i);
+				ans += (int)(j * pow(36, str.length() - 1 - i));
 		}
 	}
 
 	return ans;
 }
 
-void Bmsdata::header_analysis(std::vector<std::string> header_array){
-	for (int i = 0; i < header_array.size(); i++){
-		if (header_array.at(i).substr(0, 5) == "TITLE")
+// 1 から max までの範囲で乱数を返します。
+// 引数:
+//     max: 乱数の最大値。
+int Bmsdata::random(int max){
+	return random_engine() % max + 1;
+}
+
+void Bmsdata::header_analysis(std::vector<std::string>& header_array){
+	for (unsigned int i = 0; i < header_array.size(); i++){
+		if (starts_with(header_array.at(i), "TITLE"))
 			title = header_array.at(i).substr(6);
-		else if (header_array.at(i).substr(0, 4) == "RANK")
+		else if (starts_with(header_array.at(i), "RANK"))
 			rank = stoi(header_array.at(i).substr(5));
-		else if (header_array.at(i).substr(0, 9) == "PLAYLEVEL")
+		else if (starts_with(header_array.at(i), "PLAYLEVEL"))
 			playlevel = stoi(header_array.at(i).substr(10));
 	}
+}
+
+// RANDOM 命令をパースします。
+// 引数:
+//     temp_array: BMS 命令の vector。
+//     from: パースする範囲の先頭位置。
+//     length: パースする範囲の長さ。
+// 戻り値:
+//     削除した BMS 命令数。
+// 詳細:
+//     RANDOM 命令を評価し、IF 命令で条件に一致しないものを temp_array から削除します。
+//     ネストされた RANDOM、IF 命令をパースできます。temp_array への変更は破壊的変更です。
+unsigned int Bmsdata::parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length){
+	int random_value = 0;
+	unsigned int delete_count = 0;
+
+	for (unsigned int i = from; i < from + length; i++){
+		if (starts_with(temp_array.at(i), "RANDOM")){
+			// RANDOM 値の生成
+			int random_max = stoi(temp_array.at(i).substr(7));
+			random_value = random(random_max);
+		}
+		else if (starts_with(temp_array.at(i), "IF")){
+			// IF 値の取得
+			int value = stoi(temp_array.at(i).substr(3));
+
+			unsigned int endif = find_endif(temp_array, i);
+			unsigned int del = 0;
+			if (random_value == value){
+				// 条件にヒットしたとき
+				// 再帰呼び出しでネストされた分をパース
+				del = parse_random(temp_array, i + 1, endif - i - 1);
+				// 次を評価するためにカウンタを操作
+				i = endif - del;
+			}
+			else {
+				// 条件にヒットしなかったとき
+				// IF から ENDIF をバッサリ削除、無かったことにする
+				temp_array.erase(temp_array.begin() + i, temp_array.begin() + endif + 1);
+				del = endif - i + 2;
+				// 次を評価するためにカウンタを操作
+				i--;
+			}
+			// 削除した分 length は短くなる
+			length -= del;
+			delete_count += del;
+		}
+	}
+	return delete_count;
+}
+
+// RANDOM、IF 命令を削除します。
+// 引数:
+//     temp_array: BMS 命令の vector。
+// 詳細:
+//     parse_random 関数を使用して残った RANDOM、IF 命令を削除します。
+void Bmsdata::clean_random(std::vector<std::string>& temp_array){
+	for (unsigned int i = 0; i < temp_array.size(); i++){
+		if (starts_with(temp_array.at(i), "RANDOM") || starts_with(temp_array.at(i), "IF") || starts_with(temp_array.at(i), "ENDIF")){
+			temp_array.erase(temp_array.begin() + i);
+			i--;
+		}
+	}
+}
+
+// 後方の ENDIF 命令の位置を検索します。
+// 引数:
+//     temp_array: BMS 命令の vector。
+//     index: 検索する ENDIF 命令に対応する IF 命令の位置。
+// 戻り値:
+//     指定した IF 命令に対応する ENDIF 命令の位置。
+unsigned int Bmsdata::find_endif(std::vector<std::string>& temp_array, unsigned int index){
+	int level = 0;
+	for (unsigned int i = index + 1; i < temp_array.size(); i++){
+		if (starts_with(temp_array.at(i), "IF")){
+			level++;
+		}
+		else if (starts_with(temp_array.at(i), "ENDIF")){ // ENDIFをさがせ
+			if (level == 0)
+				return i;
+			else
+				level--;
+		}
+	}
+	return temp_array.size() - 1;
+}
+
+// str が substr で始まる文字列かどうかを返します。
+// 引数:
+//     str: 評価される文字列。
+//     substr: 評価する文字列。
+// 戻り値:
+//     str が substr で始まるなら true、そうでないなら false。
+bool Bmsdata::starts_with(std::string& str, std::string substr){
+	return str.substr(0, substr.length()) == substr;
 }
 
 std::string Bmsdata::gettitle(){
