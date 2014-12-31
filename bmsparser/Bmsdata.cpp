@@ -53,7 +53,6 @@ void Bmsdata::setbmsstring()
 
 	// CONTROL FLOWの処理
 	parse_random(temp_array, 0, temp_array.size());
-	clean_random(temp_array);
 	
 	// 配列への振り分け
 	for (unsigned i = 0; i < temp_array.size(); i++){
@@ -167,14 +166,11 @@ int Bmsdata::random(int max){
 //     temp_array: BMS 命令の vector。
 //     from: パースする範囲の先頭位置。
 //     length: パースする範囲の長さ。
-// 戻り値:
-//     削除した BMS 命令数。
 // 詳細:
-//     RANDOM 命令を評価し、IF 命令で条件に一致しないものを temp_array から削除します。
+//     RANDOM 命令を評価し、IF 命令で条件に一致しないものを利用不可としてマークします。
 //     ネストされた RANDOM、IF 命令をパースできます。temp_array への変更は破壊的変更です。
-unsigned int Bmsdata::parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length){
+void Bmsdata::parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length){
 	int random_value = 0;
-	unsigned int delete_count = 0;
 
 	for (unsigned int i = from; i < from + length; i++){
 		if (starts_with(temp_array.at(i), "RANDOM")){
@@ -187,40 +183,22 @@ unsigned int Bmsdata::parse_random(std::vector<std::string>& temp_array, unsigne
 			int value = stoi(temp_array.at(i).substr(3));
 
 			unsigned int endif = find_endif(temp_array, i);
-			unsigned int del = 0;
 			if (random_value == value){
 				// 条件にヒットしたとき
 				// 再帰呼び出しでネストされた分をパース
-				del = parse_random(temp_array, i + 1, endif - i - 1);
+				parse_random(temp_array, i + 1, endif - i - 1);
 				// 次を評価するためにカウンタを操作
-				i = endif - del;
+				i = endif;
 			}
 			else {
 				// 条件にヒットしなかったとき
-				// IF から ENDIF をバッサリ削除、無かったことにする
-				temp_array.erase(temp_array.begin() + i, temp_array.begin() + endif + 1);
-				del = endif - i + 2;
+				// IF から ENDIF の間に利用不可としてマーク
+				for (unsigned int j = i; j <= endif; j++){
+					temp_array[j] = kNotAvailable;
+				}
 				// 次を評価するためにカウンタを操作
-				i--;
+				i = endif;
 			}
-			// 削除した分 length は短くなる
-			length -= del;
-			delete_count += del;
-		}
-	}
-	return delete_count;
-}
-
-// RANDOM、IF 命令を削除します。
-// 引数:
-//     temp_array: BMS 命令の vector。
-// 詳細:
-//     parse_random 関数を使用して残った RANDOM、IF 命令を削除します。
-void Bmsdata::clean_random(std::vector<std::string>& temp_array){
-	for (unsigned int i = 0; i < temp_array.size(); i++){
-		if (starts_with(temp_array.at(i), "RANDOM") || starts_with(temp_array.at(i), "IF") || starts_with(temp_array.at(i), "ENDIF")){
-			temp_array.erase(temp_array.begin() + i);
-			i--;
 		}
 	}
 }
