@@ -50,10 +50,11 @@ private:
 	unsigned int find_endif(std::vector<std::string>& temp_array, unsigned int index);
 	void header_analysis(std::vector<std::string>& header_array);
 	int base_stoi(int base, std::string num);
+	void normalize_data(std::vector<std::string>& data_array, std::vector<DATA> & normalized_array);
 	int random(int max);
 
 	static bool starts_with(std::string& str, std::string substr);
-
+	
 	std::vector<CHANNEL> channel_data_array[CHANNEL_ELEMENTS];
 	std::vector<std::string> header_array, channel_array, wav_array, bmp_array;
 	std::vector<DATA> bmp_path_array, wav_path_array;

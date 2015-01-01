@@ -11,7 +11,7 @@ int main(){
 	cout << "load start" << endl;
 	
 	QueryPerformanceFrequency(&sysfreq);
-	data.bmspath = "ubmchallenge.bms";
+	data.bmspath = "dive_air04FD.bms";
 	QueryPerformanceCounter(&ltime);
 	data.setbmsstring();
 	QueryPerformanceCounter(&lresult);

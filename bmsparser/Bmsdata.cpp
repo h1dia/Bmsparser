@@ -26,7 +26,6 @@ void Bmsdata::setbmspath(std::string setbmspath){
 	if (ifs.fail())
 		return;
 
-	//ƒpƒX‚Í1s‚¾‚¯“Ç‚İ‚Ş
 	getline(ifs, bmspath);
 
 }
@@ -57,6 +56,9 @@ void Bmsdata::setbmsstring()
 	// ”z—ñ‚Ö‚ÌU‚è•ª‚¯
 	for (unsigned i = 0; i < temp_array.size(); i++){
 
+		if (starts_with(temp_array.at(i), kNotAvailable))
+			continue;
+
 		if (starts_with(temp_array.at(i), "BMP"))
 			bmp_array.push_back(temp_array.at(i));
 
@@ -74,22 +76,9 @@ void Bmsdata::setbmsstring()
 	// HEADER •¶‰ğÍ
 	header_analysis(header_array);
 
-	// ID ‹y‚Ñ PATH ‚Ì•R•t‚¯
-	// TODO: ŠÖ”‰»
-	for (unsigned i = 0; i < bmp_array.size(); i++){
-		DATA tempdata;
-		tempdata.id = base_stoi(36, bmp_array.at(i).substr(3, 2));
-		tempdata.path = bmp_array.at(i).substr(6);
-
-		bmp_path_array.push_back(tempdata);
-	}
-	for (unsigned i = 0; i < wav_array.size(); i++){
-		DATA tempdata;
-		tempdata.id = base_stoi(36, wav_array.at(i).substr(3, 2));
-		tempdata.path = wav_array.at(i).substr(6);
-
-		wav_path_array.push_back(tempdata);
-	}
+	// ID ‹y‚Ñ PATH ‚Ì³‹K‰»
+	normalize_data(bmp_array, bmp_path_array);
+	normalize_data(wav_array, wav_path_array);
 
 	// CHANNEL •¶‰ğÍ
 	for (unsigned i = 0; i < channel_array.size(); i++){
@@ -235,10 +224,23 @@ bool Bmsdata::starts_with(std::string& str, std::string substr){
 	return str.substr(0, substr.length()) == substr;
 }
 
+// ID ‚Æ PATH ‚ª‹Lq‚³‚ê‚½–½—ß‚ğ³‹K‰»‚µ‚Ü‚·B
+// ˆø”:
+//		data_array: ID ‚Æ PATH ‚ª‹Lq‚³‚ê‚Ä‚¢‚é–½—ß‚Ì vector
+//		normalized_array: ³‹K‰»‚³‚ê‚½–½—ß‚ğŠi”[‚·‚é vector
+void Bmsdata::normalize_data(std::vector<std::string> &data_array, std::vector<DATA> &normalized_array){
+	for (unsigned i = 0; i < data_array.size(); i++){
+		DATA tempdata;
+		tempdata.id = base_stoi(36, data_array.at(i).substr(3, 2));
+		tempdata.path = data_array.at(i).substr(6);
+
+		normalized_array.push_back(tempdata);
+	}
+}
+
 // HEADER–½—ß‚ğ‰ğÍ‚µA“K“–‚È•Ï”‚ÉŒ‹‰Ê‚ğ‘ã“ü‚µ‚Ü‚·B
 // ˆø”:
 //		headder_array: <HEADER> ‚É‘®‚µ‚½ BMS –½—ß‚Ì vector
-//
 void Bmsdata::header_analysis(std::vector<std::string>& header_array){
 	for (unsigned int i = 0; i < header_array.size(); i++){
 		if (starts_with(header_array.at(i), "TITLE"))
