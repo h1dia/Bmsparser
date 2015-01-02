@@ -28,6 +28,7 @@ private:
 	static const int MAX_ID = 1296;
 	static const int MAX_CHANNEL = 575;
 	const char* kNotAvailable = "<N/A>";
+	const std::string num_check = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	struct HEADER{
 		std::string command;

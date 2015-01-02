@@ -127,8 +127,7 @@ void Bmsdata::setbmsstring(){
 //		base: str ‚Ìi”B
 int Bmsdata::base_stoi(int base, std::string str){
 	int ans = 0;
-	std::string num_check = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	
+
 	for (unsigned int i = 0; i < str.length(); i++){
 		for (int j = 0; j < base; j++){
 			if (str.at(i) == num_check.at(j))
@@ -229,7 +228,6 @@ bool Bmsdata::starts_with(std::string& str, std::string substr){
 //		normalized_array: ³‹K‰»‚³‚ê‚½–½—ß‚ğŠi”[‚·‚é vector
 void Bmsdata::normalize_data(std::vector<std::string> &data_array, std::vector<std::string> &normalized_array){
 	for (unsigned i = 0; i < data_array.size(); i++){
-
 		int tempid = base_stoi(36, data_array.at(i).substr(3, 2));
 		std::string temppath = data_array.at(i).substr(6);
 
