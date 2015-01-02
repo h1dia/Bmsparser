@@ -25,23 +25,14 @@ public:
 private:
 	std::string filename;
 	std::string filefolder;
-	static const int CHANNEL_ELEMENTS = 575;
+	static const int MAX_ID = 1296;
+	static const int MAX_CHANNEL = 575;
 	const char* kNotAvailable = "<N/A>";
 
 	struct HEADER{
 		std::string command;
 		std::string str;
 		bool val;
-	};
-
-	struct DATA{
-		std::string path;
-		unsigned short int id;
-
-		bool operator<(const DATA& next) const	//ソート用のオペレータです。
-		{
-			return id < next.id;
-		}
 	};
 
 	struct CHANNEL{
@@ -61,16 +52,17 @@ private:
 	unsigned int find_endif(std::vector<std::string>& temp_array, unsigned int index);
 	void header_analysis(std::vector<std::string>& header_array);
 	int base_stoi(int base, std::string num);
-	void normalize_data(std::vector<std::string>& data_array, std::vector<DATA> & normalized_array);
+	void normalize_data(std::vector<std::string>& data_array, std::vector<std::string> & normalized_array);
 	int random(int max);
 
 	static bool starts_with(std::string& str, std::string substr);
 	bool judge_disused_command(std::string command);
 
-	std::vector<CHANNEL> channel_data_array[CHANNEL_ELEMENTS];
-	std::vector<DATA> bmp_path_array, wav_path_array;
+	std::vector<std::vector<CHANNEL>> channel_data_array;
+	std::vector<std::string> bmp_path_array, wav_path_array;
 	std::vector<HEADER> header_list;
 	bool load_fail;
+	bool control_flow_exsist;
 	std::string bmsfolder;
 	std::string banner;
 	std::string title;

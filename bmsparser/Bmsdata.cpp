@@ -3,6 +3,8 @@
 
 #pragma once
 #include "Bmsdata.h"
+#include <chrono>
+
 
 Bmsdata::Bmsdata(std::string filepath){
 	// ファイルパス読み込み
@@ -11,6 +13,11 @@ Bmsdata::Bmsdata(std::string filepath){
 	else
 		filefolder = "";
 	filename = filepath.substr(filepath.find_last_of("/") + 1);
+
+	// vector 初期化
+	channel_data_array.resize(MAX_CHANNEL);
+	bmp_path_array.resize(MAX_ID);
+	wav_path_array.resize(MAX_ID);
 
 	// ランダムエンジン初期化
 	std::random_device r;
@@ -21,6 +28,8 @@ Bmsdata::~Bmsdata(){
 }
 
 void Bmsdata::setbmsstring(){
+	auto start = std::chrono::system_clock::now();
+
 	// ファイル入力
 	std::ifstream ifs(filefolder + filename);
 	std::string tempstring;
@@ -39,18 +48,20 @@ void Bmsdata::setbmsstring(){
 			// #の削除
 			tempstring.erase(0, 1);
 			temp_array.push_back(tempstring);
+
 		}
 	}
-
 	// CONTROL FLOWの処理
 	parse_random(temp_array, 0, temp_array.size());
-	
+
 	// 配列への振り分け
 	for (unsigned i = 0; i < temp_array.size(); i++){
-
-		if (judge_disused_command(temp_array.at(i)))
-			continue;
-
+		
+		if (control_flow_exsist){
+			if (judge_disused_command(temp_array.at(i)))
+				continue;
+		}
+		
 		if (starts_with(temp_array.at(i), "BMP"))
 			bmp_array.push_back(temp_array.at(i));
 
@@ -85,32 +96,27 @@ void Bmsdata::setbmsstring(){
 			temp.num = stod(channel_array.at(i).substr(6));
 			channel_data_array[channel].push_back(temp);
 		}
-		else{
+		else {
 			//解像度の計算
 			temp.resolution = channel_array.at(i).substr(6).length() / 2;
 
 			//ID 及びその位置の計算
 			for (unsigned j = 0; j < temp.resolution; j++){
-				temp.step = j;
 				temp.id = base_stoi(36, channel_array.at(i).substr(6 + j * 2, 2));
-
 				//ID 00 を無視する
-				if (temp.id != 0)
-					channel_data_array[channel].push_back(temp);
+				if (temp.id != 0){
+					temp.step = j;
+					channel_data_array.at(channel).push_back(temp);
+				}
 			}
 		}
 	}
 
 	// ソート
-	for (int i = 0; i < CHANNEL_ELEMENTS; i++){
-		if (channel_data_array[i].size())
-			std::sort(channel_data_array[i].begin(), channel_data_array[i].end());
+	for (int i = 0; i < MAX_CHANNEL; i++){
+		if (channel_data_array.at(i).size())
+			std::sort(channel_data_array.at(i).begin(), channel_data_array.at(i).end());
 	}
-	for (unsigned int i = 0; i < bmp_path_array.size(); i++)
-		std::sort(bmp_path_array.begin(), bmp_path_array.end());
-
-	for (unsigned int i = 0; i < wav_path_array.size(); i++)
-		std::sort(wav_path_array.begin(), wav_path_array.end());
 
 	return;
 }
@@ -149,10 +155,12 @@ int Bmsdata::random(int max){
 //     RANDOM 命令を評価し、IF 命令で条件に一致しないものを利用不可としてマークします。
 //     ネストされた RANDOM、IF 命令をパースできます。temp_array への変更は破壊的変更です。
 void Bmsdata::parse_random(std::vector<std::string>& temp_array, unsigned int from, unsigned int length){
+	control_flow_exsist = false;
 	int random_value = 0;
 
 	for (unsigned int i = from; i < from + length; i++){
 		if (starts_with(temp_array.at(i), "RANDOM")){
+			control_flow_exsist = true;
 			// RANDOM 値の生成
 			int random_max = stoi(temp_array.at(i).substr(7));
 			random_value = random(random_max);
@@ -219,13 +227,13 @@ bool Bmsdata::starts_with(std::string& str, std::string substr){
 // 引数:
 //		data_array: ID と PATH が記述されている命令の vector
 //		normalized_array: 正規化された命令を格納する vector
-void Bmsdata::normalize_data(std::vector<std::string> &data_array, std::vector<DATA> &normalized_array){
+void Bmsdata::normalize_data(std::vector<std::string> &data_array, std::vector<std::string> &normalized_array){
 	for (unsigned i = 0; i < data_array.size(); i++){
-		DATA tempdata;
-		tempdata.id = base_stoi(36, data_array.at(i).substr(3, 2));
-		tempdata.path = data_array.at(i).substr(6);
 
-		normalized_array.push_back(tempdata);
+		int tempid = base_stoi(36, data_array.at(i).substr(3, 2));
+		std::string temppath = data_array.at(i).substr(6);
+
+		normalized_array.at(tempid) = temppath;
 	}
 }
 

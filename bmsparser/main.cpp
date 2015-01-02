@@ -1,19 +1,20 @@
 #include <iostream>
-#include <Windows.h>
+#include <chrono>
 #include "Bmsdata.h"
 
 using namespace std;
 
 int main(){
 	Bmsdata data("dive_air04FD.bms");
-	LARGE_INTEGER sysfreq, ltime, lresult;
+
 
 	cout << "load start" << endl;
 	
-	QueryPerformanceFrequency(&sysfreq);
-	QueryPerformanceCounter(&ltime);
+	auto start = chrono::system_clock::now();
 	data.setbmsstring();
-	QueryPerformanceCounter(&lresult);
+	auto end = chrono::system_clock::now();
+
+	auto diff = end - start;
 
 	int notes = 0;
 	for (int i = 11; i < 20; i++){
@@ -24,7 +25,7 @@ int main(){
 	cout << "notes   : " << notes << endl;
 	cout << "level   : " << data.get_header_s("PLAYLEVEL") << endl;
 	cout << "errtest : " << data.get_header_s("ERRTEST") << endl;
-	cout << "calctime: " << (double)(lresult.QuadPart - ltime.QuadPart) / (double)sysfreq.QuadPart << "(sec)" << endl;
+	cout << "calctime: " << chrono::duration_cast<std::chrono::milliseconds>(diff).count() << "(ms)" << endl;
 
 	return 0;
 }
