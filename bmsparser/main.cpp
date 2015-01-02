@@ -5,7 +5,7 @@
 using namespace std;
 
 int main(){
-	Bmsdata data("dive_air04FD.bms");
+	Bmsdata data("ubmchallenge.bms");
 
 
 	cout << "load start" << endl;

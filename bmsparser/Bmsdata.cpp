@@ -202,7 +202,7 @@ unsigned int Bmsdata::find_endif(std::vector<std::string>& temp_array, unsigned 
 			level++;
 		}
 		//#ENDIF #END IF #IFEND ‚Í‘S‚Ä“¯‹`‚Å‚·B
-		else if (starts_with(temp_array.at(i), "END") && starts_with(temp_array.at(i), "IFEND")){
+		else if (starts_with(temp_array.at(i), "END") || starts_with(temp_array.at(i), "IFEND")){
 			if (level == 0)
 				return i;
 			else
