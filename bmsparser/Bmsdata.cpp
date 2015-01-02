@@ -2,18 +2,14 @@
 // BMS command memo (JP) - http://hitkey.nekokan.dyndns.info/cmdsJP.htm
 
 #pragma once
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <algorithm>
 #include "Bmsdata.h"
-#include <cmath>
 
 Bmsdata::Bmsdata(){
 	// ランダムエンジン初期化
 	std::random_device r;
 	random_engine = std::mt19937(r());
+
+	load_fail = false;
 }
 
 Bmsdata::~Bmsdata(){
@@ -23,8 +19,10 @@ void Bmsdata::setbmspath(std::string setbmspath){
 	std::ifstream ifs(setbmspath);
 
 	// 失敗時処理
-	if (ifs.fail())
+	if (ifs.fail()){
+		load_fail = true;
 		return;
+	}
 
 	getline(ifs, bmspath);
 
@@ -35,7 +33,7 @@ void Bmsdata::setbmsstring()
 	// ファイル入力
 	std::ifstream ifs(bmspath);
 	std::string tempstring;
-	std::vector<std::string> temp_array;
+	std::vector<std::string> temp_array, header_array, channel_array, wav_array, bmp_array;
 
 	if (ifs.fail())
 		return;
@@ -56,7 +54,7 @@ void Bmsdata::setbmsstring()
 	// 配列への振り分け
 	for (unsigned i = 0; i < temp_array.size(); i++){
 
-		if (starts_with(temp_array.at(i), kNotAvailable))
+		if (judge_disused_command(temp_array.at(i)))
 			continue;
 
 		if (starts_with(temp_array.at(i), "BMP"))
@@ -65,8 +63,7 @@ void Bmsdata::setbmsstring()
 		else if (starts_with(temp_array.at(i), "WAV"))
 			wav_array.push_back(temp_array.at(i));
 
-		// コマンドの先頭5文字
-		else if (atoi(temp_array.at(i).substr(0, 5).c_str()) > 0)
+		else if (std::all_of(temp_array.at(i).cbegin(), temp_array.at(i).cbegin() + 5, isdigit))
 			channel_array.push_back(temp_array.at(i));
 
 		else
@@ -111,7 +108,6 @@ void Bmsdata::setbmsstring()
 	}
 
 	// ソート
-	// TODO: 関数化
 	for (int i = 0; i < CHANNEL_ELEMENTS; i++){
 		if (channel_data_array[i].size())
 			std::sort(channel_data_array[i].begin(), channel_data_array[i].end());
@@ -204,7 +200,8 @@ unsigned int Bmsdata::find_endif(std::vector<std::string>& temp_array, unsigned 
 		if (starts_with(temp_array.at(i), "IF")){
 			level++;
 		}
-		else if (starts_with(temp_array.at(i), "ENDIF")){
+		//#ENDIF #END IF #IFEND は全て同義です。
+		else if (starts_with(temp_array.at(i), "END") && starts_with(temp_array.at(i), "IFEND")){
 			if (level == 0)
 				return i;
 			else
@@ -238,18 +235,86 @@ void Bmsdata::normalize_data(std::vector<std::string> &data_array, std::vector<D
 	}
 }
 
-// HEADER命令を解析し、適当な変数に結果を代入します。
+// HEADER, CHANNEL 命令をパースする上で、不要な命令かどうかを判定します。
+// parse_random 関数よりも先に呼び出した場合は未定義の動作です。
+// 引数:
+//     command: 評価される文字列。
+// 戻り値:
+//     command が不要なコマンドの条件に一致するなら true、そうでないなら false。
+bool Bmsdata::judge_disused_command(std::string command){
+	if (kNotAvailable == command
+		|| starts_with(command, "RANDOM")
+		|| starts_with(command, "IF")
+		|| starts_with(command, "ELSEIF")
+		|| starts_with(command, "ENDIF")
+		|| starts_with(command, "SETRANDOM")
+		|| starts_with(command, "ENDRANDOM")
+		|| starts_with(command, "SWITCH")
+		|| starts_with(command, "CASE")
+		|| starts_with(command, "SKIP")
+		|| starts_with(command, "DEF")
+		|| starts_with(command, "SETSWITCH")
+		|| starts_with(command, "ENDSW")
+		)
+		return true;
+	else
+		return false;
+}
+
+
+// HEADER 命令のうち ID を扱わない命令を、すべて header_list に格納します。
+// 半角スペースをデリミタとして、命令を command に、str に命令の内容を、
+// もしも str が数値ならば val true を、そうでないなら val に false を代入します。
 // 引数:
 //		headder_array: <HEADER> に属した BMS 命令の vector
 void Bmsdata::header_analysis(std::vector<std::string>& header_array){
+	HEADER temp;
 	for (unsigned int i = 0; i < header_array.size(); i++){
-		if (starts_with(header_array.at(i), "TITLE"))
-			title = header_array.at(i).substr(6);
-		else if (starts_with(header_array.at(i), "RANK"))
-			rank = stoi(header_array.at(i).substr(5));
-		else if (starts_with(header_array.at(i), "PLAYLEVEL"))
-			playlevel = stoi(header_array.at(i).substr(10));
+		std::string header = header_array.at(i);
+
+		temp.command = header.substr(0, header.find_first_of(" "));
+		temp.str = header.substr(header.find_first_of(" ") + 1);
+
+		try{
+			stod(temp.str);
+			temp.val = true;
+		}
+		catch (std::invalid_argument& err){
+			temp.val = false;
+		}
+
+		header_list.push_back(temp);
 	}
+}
+
+// HEADER 命令の内容を string 型で取得します。
+// 引数:
+//     command: 呼び出すべき命令の内容。
+// 戻り値:
+//     命令の内容が存在していれば内容の string、そうでないなら kNotAvailable。
+std::string Bmsdata::get_headder_s(std::string command){
+	for (int i = 0; i < header_list.size(); i++){
+		if (header_list.at(i).command == command)
+			return header_list.at(i).str;
+	}
+	return kNotAvailable;
+}
+
+// HEADER 命令の内容を double 型で取得します。
+// 引数:
+//     command: 呼び出すべき命令の内容。
+// 戻り値:
+//     命令の内容が存在していて、かつ数値ならば内容の double、そうでないなら NAN。
+double Bmsdata::get_headder_d(std::string command){
+	for (int i = 0; i < header_list.size(); i++){
+		if (header_list.at(i).command == command){
+			if (header_list.at(i).val)
+				stod(header_list.at(i).str);
+			else
+				return NAN;
+		}
+	}
+	return NAN;
 }
 
 int Bmsdata::getsize(int channel){

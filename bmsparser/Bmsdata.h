@@ -3,6 +3,11 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <list>
+#include <fstream>
+#include <cmath>
+#include <algorithm>
+#include <cctype>
 
 class Bmsdata{
 public:
@@ -13,6 +18,8 @@ public:
 	void setbmsstring();
 	void loadheader();
 
+	std::string get_headder_s(std::string command);
+	double get_headder_d(std::string command);
 	std::string gettitle();
 	int getplaylevel();
 	int getsize(int channel);
@@ -22,6 +29,12 @@ public:
 private:
 	static const int CHANNEL_ELEMENTS = 575;
 	const char* kNotAvailable = "<N/A>";
+
+	struct HEADER{
+		std::string command;
+		std::string str;
+		bool val;
+	};
 
 	struct DATA{
 		std::string path;
@@ -54,16 +67,16 @@ private:
 	int random(int max);
 
 	static bool starts_with(std::string& str, std::string substr);
-	
-	std::vector<CHANNEL> channel_data_array[CHANNEL_ELEMENTS];
-	std::vector<std::string> header_array, channel_array, wav_array, bmp_array;
-	std::vector<DATA> bmp_path_array, wav_path_array;
-	std::vector<std::string> data;
+	bool judge_disused_command(std::string command);
 
+	std::vector<CHANNEL> channel_data_array[CHANNEL_ELEMENTS];
+	std::vector<DATA> bmp_path_array, wav_path_array;
+	std::vector<HEADER> header_list;
 	int random_count;
 	int rank;
 	int total;
 	int playlevel;
+	bool load_fail;
 	std::string bmsfolder;
 	std::string banner;
 	std::string title;

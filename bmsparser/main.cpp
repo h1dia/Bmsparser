@@ -21,9 +21,10 @@ int main(){
 		notes += data.getsize(i);
 	}
 
-	cout << "title   : " << data.gettitle() << endl;
+	cout << "title   : " << data.get_headder_s("TITLE") << endl;
 	cout << "notes   : " << notes << endl;
-	cout << "level   : " << data.getplaylevel() << endl;
+	cout << "level   : " << data.get_headder_s("PLAYLEVEL") << endl;
+	cout << "errtest : " << data.get_headder_s("ERRTEST") << endl;
 	cout << "calctime: " << (double)(lresult.QuadPart - ltime.QuadPart) / (double)sysfreq.QuadPart << "(sec)" << endl;
 
 	return 0;
