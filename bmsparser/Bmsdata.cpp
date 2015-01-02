@@ -4,39 +4,33 @@
 #pragma once
 #include "Bmsdata.h"
 
-Bmsdata::Bmsdata(){
+Bmsdata::Bmsdata(std::string filepath){
+	// ファイルパス読み込み
+	if (!(filepath.find_last_of("/") == std::string::npos))
+		filefolder = filepath.substr(0, filepath.find_last_of("/") + 1);
+	else
+		filefolder = "";
+	filename = filepath.substr(filepath.find_last_of("/") + 1);
+
 	// ランダムエンジン初期化
 	std::random_device r;
 	random_engine = std::mt19937(r());
-
-	load_fail = false;
 }
 
 Bmsdata::~Bmsdata(){
 }
 
-void Bmsdata::setbmspath(std::string setbmspath){
-	std::ifstream ifs(setbmspath);
-
-	// 失敗時処理
-	if (ifs.fail()){
-		load_fail = true;
-		return;
-	}
-
-	getline(ifs, bmspath);
-
-}
-
-void Bmsdata::setbmsstring()
-{
+void Bmsdata::setbmsstring(){
 	// ファイル入力
-	std::ifstream ifs(bmspath);
+	std::ifstream ifs(filefolder + filename);
 	std::string tempstring;
 	std::vector<std::string> temp_array, header_array, channel_array, wav_array, bmp_array;
-
+	
+	// 失敗時処理
 	if (ifs.fail())
-		return;
+		load_fail = true;
+	else
+		load_fail = false;
 
 	// temp_array にコマンド行のみを格納
 	while (getline(ifs, tempstring))
@@ -279,7 +273,7 @@ void Bmsdata::header_analysis(std::vector<std::string>& header_array){
 			stod(temp.str);
 			temp.val = true;
 		}
-		catch (std::invalid_argument& err){
+		catch (std::invalid_argument&){
 			temp.val = false;
 		}
 
@@ -292,8 +286,8 @@ void Bmsdata::header_analysis(std::vector<std::string>& header_array){
 //     command: 呼び出すべき命令の内容。
 // 戻り値:
 //     命令の内容が存在していれば内容の string、そうでないなら kNotAvailable。
-std::string Bmsdata::get_headder_s(std::string command){
-	for (int i = 0; i < header_list.size(); i++){
+std::string Bmsdata::get_header_s(std::string command){
+	for (unsigned int i = 0; i < header_list.size(); i++){
 		if (header_list.at(i).command == command)
 			return header_list.at(i).str;
 	}
@@ -305,8 +299,8 @@ std::string Bmsdata::get_headder_s(std::string command){
 //     command: 呼び出すべき命令の内容。
 // 戻り値:
 //     命令の内容が存在していて、かつ数値ならば内容の double、そうでないなら NAN。
-double Bmsdata::get_headder_d(std::string command){
-	for (int i = 0; i < header_list.size(); i++){
+double Bmsdata::get_header_d(std::string command){
+	for (unsigned int i = 0; i < header_list.size(); i++){
 		if (header_list.at(i).command == command){
 			if (header_list.at(i).val)
 				stod(header_list.at(i).str);
@@ -319,14 +313,4 @@ double Bmsdata::get_headder_d(std::string command){
 
 int Bmsdata::getsize(int channel){
 	return channel_data_array[channel].size();
-}
-
-// 削除予定の関数です。
-std::string Bmsdata::gettitle(){
-	return title;
-}
-
-// 削除予定の関数です。
-int Bmsdata::getplaylevel(){
-	return playlevel;
 }

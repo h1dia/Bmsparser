@@ -5,13 +5,12 @@
 using namespace std;
 
 int main(){
-	Bmsdata data;
+	Bmsdata data("dive_air04FD.bms");
 	LARGE_INTEGER sysfreq, ltime, lresult;
 
 	cout << "load start" << endl;
 	
 	QueryPerformanceFrequency(&sysfreq);
-	data.bmspath = "dive_air04FD.bms";
 	QueryPerformanceCounter(&ltime);
 	data.setbmsstring();
 	QueryPerformanceCounter(&lresult);
@@ -21,10 +20,10 @@ int main(){
 		notes += data.getsize(i);
 	}
 
-	cout << "title   : " << data.get_headder_s("TITLE") << endl;
+	cout << "title   : " << data.get_header_s("TITLE") << endl;
 	cout << "notes   : " << notes << endl;
-	cout << "level   : " << data.get_headder_s("PLAYLEVEL") << endl;
-	cout << "errtest : " << data.get_headder_s("ERRTEST") << endl;
+	cout << "level   : " << data.get_header_s("PLAYLEVEL") << endl;
+	cout << "errtest : " << data.get_header_s("ERRTEST") << endl;
 	cout << "calctime: " << (double)(lresult.QuadPart - ltime.QuadPart) / (double)sysfreq.QuadPart << "(sec)" << endl;
 
 	return 0;

@@ -11,22 +11,20 @@
 
 class Bmsdata{
 public:
-	Bmsdata();
+	Bmsdata(std::string filepath);
 	~Bmsdata();
 
-	void setbmspath(std::string bmspath);
 	void setbmsstring();
 	void loadheader();
 
-	std::string get_headder_s(std::string command);
-	double get_headder_d(std::string command);
-	std::string gettitle();
-	int getplaylevel();
+	std::string get_header_s(std::string command);
+	double get_header_d(std::string command);
 	int getsize(int channel);
 
-	std::string bmspath;
 
 private:
+	std::string filename;
+	std::string filefolder;
 	static const int CHANNEL_ELEMENTS = 575;
 	const char* kNotAvailable = "<N/A>";
 
@@ -72,10 +70,6 @@ private:
 	std::vector<CHANNEL> channel_data_array[CHANNEL_ELEMENTS];
 	std::vector<DATA> bmp_path_array, wav_path_array;
 	std::vector<HEADER> header_list;
-	int random_count;
-	int rank;
-	int total;
-	int playlevel;
 	bool load_fail;
 	std::string bmsfolder;
 	std::string banner;
