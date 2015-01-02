@@ -17,8 +17,8 @@ public:
 	void setbmsstring();
 	void loadheader();
 
-	std::string get_header_s(std::string command);
-	double get_header_d(std::string command);
+	std::string search_header_s(std::string command);
+	double search_header_d(std::string command);
 	int getsize(int channel);
 
 

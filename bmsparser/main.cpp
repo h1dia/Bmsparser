@@ -5,7 +5,7 @@
 using namespace std;
 
 int main(){
-	Bmsdata data("ubmchallenge.bms");
+	Bmsdata data("dive_air04FD.bms");
 
 
 	cout << "load start" << endl;
@@ -21,10 +21,10 @@ int main(){
 		notes += data.getsize(i);
 	}
 
-	cout << "title   : " << data.get_header_s("TITLE") << endl;
+	cout << "title   : " << data.search_header_s("TITLE") << endl;
 	cout << "notes   : " << notes << endl;
-	cout << "level   : " << data.get_header_s("PLAYLEVEL") << endl;
-	cout << "errtest : " << data.get_header_s("ERRTEST") << endl;
+	cout << "level   : " << data.search_header_s("PLAYLEVEL") << endl;
+	cout << "errtest : " << data.search_header_s("ERRTEST") << endl;
 	cout << "calctime: " << chrono::duration_cast<std::chrono::milliseconds>(diff).count() << "(ms)" << endl;
 
 	return 0;

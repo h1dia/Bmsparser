@@ -5,7 +5,6 @@
 #include "Bmsdata.h"
 #include <chrono>
 
-
 Bmsdata::Bmsdata(std::string filepath){
 	// ファイルパス読み込み
 	if (!(filepath.find_last_of("/") == std::string::npos))
@@ -28,7 +27,6 @@ Bmsdata::~Bmsdata(){
 }
 
 void Bmsdata::setbmsstring(){
-	auto start = std::chrono::system_clock::now();
 
 	// ファイル入力
 	std::ifstream ifs(filefolder + filename);
@@ -84,32 +82,40 @@ void Bmsdata::setbmsstring(){
 
 	// CHANNEL 文解析
 	for (unsigned i = 0; i < channel_array.size(); i++){
-		CHANNEL temp = {};
-		// 小節
-		temp.measure = stoi(channel_array.at(i).substr(0, 3));
+		// コマンドの大文字変換
+		std::transform(channel_array.at(i).cbegin(), channel_array.at(i).cend(),
+			channel_array.at(i).begin(), toupper);
 
-		// チャンネル
+		CHANNEL temp = {};
+
+		temp.measure = stoi(channel_array.at(i).substr(0, 3));
 		int channel = stoi(channel_array.at(i).substr(3, 2));
 
-		// #xxx02 では小数のみが与えられる
-		if (channel == 2){
-			temp.num = stod(channel_array.at(i).substr(6));
-			channel_data_array[channel].push_back(temp);
-		}
-		else {
-			//解像度の計算
-			temp.resolution = channel_array.at(i).substr(6).length() / 2;
-
-			//ID 及びその位置の計算
-			for (unsigned j = 0; j < temp.resolution; j++){
-				temp.id = base_stoi(36, channel_array.at(i).substr(6 + j * 2, 2));
-				//ID 00 を無視する
-				if (temp.id != 0){
-					temp.step = j;
-					channel_data_array.at(channel).push_back(temp);
+		try{
+			// #xxx02 では小数のみが与えられる
+			if (channel == 2){
+				temp.num = stod(channel_array.at(i).substr(6));
+				channel_data_array[channel].push_back(temp);
+			}
+			else {
+				//解像度の計算
+				temp.resolution = channel_array.at(i).substr(6).length() / 2;
+	
+				//ID 及びその位置の計算
+				for (unsigned j = 0; j < temp.resolution; j++){
+					temp.id = base_stoi(36, channel_array.at(i).substr(6 + j * 2, 2));
+					//ID 00 を無視する
+					if (temp.id != 0){
+						temp.step = j;
+						channel_data_array.at(channel).push_back(temp);
+					}
 				}
 			}
 		}
+		// コマンドに変な物(アルファベット/数字以外)が突っ込まれているとき
+		catch (std::invalid_argument&){
+		}
+
 	}
 
 	// ソート
@@ -228,7 +234,9 @@ bool Bmsdata::starts_with(std::string& str, std::string substr){
 //		normalized_array: 正規化された命令を格納する vector
 void Bmsdata::normalize_data(std::vector<std::string> &data_array, std::vector<std::string> &normalized_array){
 	for (unsigned i = 0; i < data_array.size(); i++){
-		int tempid = base_stoi(36, data_array.at(i).substr(3, 2));
+		std::string id = data_array.at(i).substr(3, 2);
+		std::transform(id.cbegin(), id.cend(), id.begin(), toupper);
+		int tempid = base_stoi(36, id);
 		std::string temppath = data_array.at(i).substr(6);
 
 		normalized_array.at(tempid) = temppath;
@@ -288,11 +296,12 @@ void Bmsdata::header_analysis(std::vector<std::string>& header_array){
 }
 
 // HEADER 命令の内容を string 型で取得します。
+// 計算量がO(n)のため、同じ命令を複数回呼び出す場合は変数に代入してください。
 // 引数:
 //     command: 呼び出すべき命令の内容。
 // 戻り値:
 //     命令の内容が存在していれば内容の string、そうでないなら kNotAvailable。
-std::string Bmsdata::get_header_s(std::string command){
+std::string Bmsdata::search_header_s(std::string command){
 	for (unsigned int i = 0; i < header_list.size(); i++){
 		if (header_list.at(i).command == command)
 			return header_list.at(i).str;
@@ -300,12 +309,13 @@ std::string Bmsdata::get_header_s(std::string command){
 	return kNotAvailable;
 }
 
-// HEADER 命令の内容を double 型で取得します。
+// HEADER 命令の内容を double 型で取得します。。 
+// 計算量がO(n)のため、同じ命令を複数回呼び出す場合は変数に代入してください。
 // 引数:
 //     command: 呼び出すべき命令の内容。
 // 戻り値:
 //     命令の内容が存在していて、かつ数値ならば内容の double、そうでないなら NAN。
-double Bmsdata::get_header_d(std::string command){
+double Bmsdata::search_header_d(std::string command){
 	for (unsigned int i = 0; i < header_list.size(); i++){
 		if (header_list.at(i).command == command){
 			if (header_list.at(i).val)
@@ -316,6 +326,8 @@ double Bmsdata::get_header_d(std::string command){
 	}
 	return NAN;
 }
+
+// TODO: unordered_mapを利用した header_list を作る
 
 int Bmsdata::getsize(int channel){
 	return channel_data_array[channel].size();
